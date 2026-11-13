@@ -117,6 +117,17 @@
         <button class="link-btn" id="btnRestart" type="button" data-hi="प्रगति अभी से दोबारा शुरू करें">Restart progress from now</button>
       </div>
 
+      <div class="field" id="msField">
+        <div class="label"><span id="l-ms" data-hi="माइलस्टोन">Milestones</span> <span class="opt" data-hi="वैकल्पिक">optional</span></div>
+        <p class="hint" data-hi="डेडलाइन तक के छोटे पड़ाव। ये वॉलपेपर पर क्रम से दिखते हैं।">Short steps on the way to the deadline. They appear on the wallpaper in order.</p>
+        <ul class="ms-list" id="msList" aria-labelledby="l-ms"></ul>
+        <p class="hint ms-empty" id="msEmpty" hidden data-hi="अभी कोई माइलस्टोन नहीं — जोड़ें, या हमें सुझाने दें।">No milestones yet — add one, or let us suggest some.</p>
+        <div class="ms-actions">
+          <button class="btn btn-soft" id="btnMsAdd" type="button"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span data-hi="माइलस्टोन जोड़ें">Add milestone</span></button>
+          <button class="btn btn-ghost" id="btnMsSuggest" type="button"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg><span data-hi="मेरे लिए सुझाएँ">Suggest for me</span></button>
+        </div>
+      </div>
+
       <div class="field">
         <label class="label" for="inQuote"><span data-hi="प्रेरणा की पंक्ति">Motivation line</span> <span class="opt" data-hi="वैकल्पिक">optional</span></label>
         <div class="input-row">

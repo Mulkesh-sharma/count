@@ -521,3 +521,23 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 2px 8px 
 :root[data-theme="light"] .dl-pill { color: #1d6fb8; }
 html[lang="hi"] .label, html[lang="hi"] .dl-pill { letter-spacing: 0; text-transform: none; }
 html[lang="hi"] .label { font-size: .8rem; }
+
+/* ---------- milestones editor ---------- */
+.ms-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.ms-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .45rem; align-items: center; }
+.ms-row input { min-height: 2.6rem; padding: .5rem .75rem; }
+.ms-row .ms-date { width: 9.6rem; }
+.ms-del {
+  width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: transparent; color: var(--faint); cursor: pointer; transition: color .2s, background-color .2s;
+}
+.ms-del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.ms-del:focus-visible { outline: none; box-shadow: var(--focus); }
+.ms-del svg { width: 1.05rem; height: 1.05rem; }
+.ms-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ms-actions .btn[disabled] { opacity: .45; }
+@media (max-width: 479.98px) {
+  .ms-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .ms-row .ms-label { grid-column: 1 / -1; }
+  .ms-row .ms-date { width: 100%; }
+}
