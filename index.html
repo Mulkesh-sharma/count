@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deadline OS — Your Personal Countdown Lock Screen</title>
+<meta name="description" content="Create a beautiful countdown for any deadline, preview it live on a lock screen, and download a wallpaper sized for any phone, tablet, laptop or monitor.">
+<meta name="theme-color" content="#05071a">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b7cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%2305071a'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='url(%23g)' stroke-width='6' stroke-linecap='round' stroke-dasharray='78 40' transform='rotate(-90 32 32)'/%3E%3C/svg%3E">
+<script>
+/* Apply the saved / system colour scheme before first paint (no flash). */
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('deadlineos.v1') || 'null');
+    var t = s && s.ui && s.ui.theme;
+    if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<!--
+  Bilingual (English / हिन्दी): every translatable element keeps its English text and carries the Hindi
+  text in a data-hi="…" attribute (data-hi-placeholder / -aria-label / -title / -html for the others).
+  app.js swaps them when you tap EN / हिं.
+-->
+<body data-view="preview">
+<a class="skip" href="#panel-studio" data-hi="एडिटर पर जाएँ">Skip to the editor</a>
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+      <defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+      <rect width="40" height="40" rx="12" fill="rgba(255,255,255,.07)"/>
+      <circle cx="20" cy="20" r="10.5" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="3.6"/>
+      <circle cx="20" cy="20" r="10.5" fill="none" stroke="url(#bm)" stroke-width="3.6" stroke-linecap="round" stroke-dasharray="46 30" transform="rotate(-90 20 20)"/>
+    </svg>
+    <div class="brand-text"><strong>Deadline OS</strong><span data-hi="आपकी अपनी काउंटडाउन लॉक स्क्रीन">Your personal countdown lock screen</span></div>
+  </div>
+  <div class="top-actions">
+    <div class="lang-switch" role="group" aria-label="Language / भाषा">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="hi" aria-pressed="false" lang="hi">हिं</button>
+    </div>
+    <button class="btn btn-primary" id="btnLock" type="button" aria-label="Open live lock screen" data-hi-aria-label="लाइव लॉक स्क्रीन खोलें">
+      <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><span class="btn-label" data-hi="लाइव लॉक स्क्रीन">Live lock screen</span>
+    </button>
+    <button class="btn btn-icon" id="btnLink" type="button" aria-label="Copy share link" title="Copy share link" data-hi-aria-label="शेयर लिंक कॉपी करें" data-hi-title="शेयर लिंक कॉपी करें">
+      <svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnTheme" type="button" aria-label="Switch between light and dark interface" title="Light / dark" data-hi-aria-label="लाइट और डार्क थीम बदलें" data-hi-title="लाइट / डार्क">
+      <svg class="ic ic-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+      <svg class="ic ic-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="app" id="app">
+
+  <!-- ============ DEADLINES ============ -->
+  <section class="panel" id="panel-list" aria-labelledby="h-list">
+    <div class="panel-head">
+      <div><h2 id="h-list" data-hi="आपकी डेडलाइन">Your deadlines</h2><p class="sub" id="dlCount">1 countdown</p></div>
+      <button class="btn btn-soft" id="btnNew" type="button"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span data-hi="नई">New</span></button>
+    </div>
+    <ul class="dl-list" id="deadlines"></ul>
+  </section>
+
+  <!-- ============ STUDIO ============ -->
+  <section class="panel" id="panel-studio" aria-labelledby="h-studio">
+    <div class="panel-head">
+      <div><h2 id="h-studio" data-hi="स्टूडियो">Studio</h2><p class="sub" data-hi="इसे अपना बनाएँ — सब कुछ अपने-आप सेव होता है।">Make it yours — everything saves automatically.</p></div>
+    </div>
+
+    <p class="draft-note" id="draftNote" hidden data-hi="नया इवेंट — जानकारी भरें, फिर “बनाएँ” दबाएँ।">New event — fill in the details, then tap Create.</p>
+
+    <div class="tabs" id="tabs" role="tablist" aria-label="Studio sections" data-hi-aria-label="स्टूडियो के सेक्शन">
+      <button class="tab" role="tab" type="button" id="tab-event" aria-controls="pane-event" data-tab="event"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span data-hi="इवेंट">Event</span></button>
+      <button class="tab" role="tab" type="button" id="tab-style" aria-controls="pane-style" data-tab="style"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"/></svg><span data-hi="स्टाइल">Style</span></button>
+      <button class="tab" role="tab" type="button" id="tab-export" aria-controls="pane-export" data-tab="export"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span data-hi="एक्सपोर्ट">Export</span></button>
+    </div>
+
+    <!-- ---- Event ---- -->
+    <div class="pane" id="pane-event" role="tabpanel" aria-labelledby="tab-event">
+      <div class="field">
+        <span class="label" id="l-presets" data-hi="आप किसका इंतज़ार कर रहे हैं?">What are you counting down to?</span>
+        <div class="chips" id="presets" role="group" aria-labelledby="l-presets"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="inTitle" data-hi="इवेंट का नाम">Name your event</label>
+        <input id="inTitle" type="text" maxlength="60" placeholder="e.g. Final exams, Goa trip, Launch day" data-hi-placeholder="जैसे: बोर्ड परीक्षा, गोवा यात्रा, लॉन्च डे" autocomplete="off" enterkeyhint="done">
+      </div>
+
+      <div class="field">
+        <label class="label" for="inEmoji" data-hi="आइकन">Icon</label>
+        <div class="emoji-row">
+          <input id="inEmoji" type="text" maxlength="24" placeholder="🎯" autocomplete="off" aria-label="Type or paste any emoji" data-hi-aria-label="कोई भी इमोजी लिखें या पेस्ट करें">
+          <div class="emoji-grid" id="emojiPick" role="group" aria-label="Quick emoji picks" data-hi-aria-label="तुरंत चुनने वाले इमोजी"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="inDate" data-hi="तारीख़ और समय">Date &amp; time</label>
+        <input id="inDate" type="datetime-local" min="1970-01-01T00:00" max="2099-12-31T23:59">
+        <p class="hint" id="dateHint" aria-live="polite"></p>
+        <div class="chips small" id="quick" role="group" aria-label="Quick dates" data-hi-aria-label="जल्दी तारीख़ चुनें"></div>
+        <button class="link-btn" id="btnRestart" type="button" data-hi="प्रगति अभी से दोबारा शुरू करें">Restart progress from now</button>
+      </div>
+
+      <div class="field">
+        <label class="label" for="inQuote"><span data-hi="प्रेरणा की पंक्ति">Motivation line</span> <span class="opt" data-hi="वैकल्पिक">optional</span></label>
+        <div class="input-row">
+          <input id="inQuote" type="text" maxlength="90" placeholder="A line that keeps you going" data-hi-placeholder="कोई पंक्ति जो आपको चलाती रहे" autocomplete="off" enterkeyhint="done">
+          <button class="btn btn-soft btn-icon" id="btnQuote" type="button" aria-label="Surprise me with a motivation line" title="Surprise me" data-hi-aria-label="कोई प्रेरणा पंक्ति चुन दो" data-hi-title="मुझे चौंकाओ"><svg class="ic" aria-hidden="true"><use href="#i-shuffle"/></svg></button>
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-soft" id="btnDup" type="button"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg><span data-hi="कॉपी बनाएँ">Duplicate</span></button>
+        <button class="btn btn-danger" id="btnDel" type="button"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg><span data-hi="हटाएँ">Delete</span></button>
+      </div>
+    </div>
+
+    <!-- ---- Style ---- -->
+    <div class="pane" id="pane-style" role="tabpanel" aria-labelledby="tab-style" hidden>
+      <div class="field">
+        <span class="label" id="l-theme" data-hi="रंग थीम">Colour theme</span>
+        <div class="swatches" id="themes" role="radiogroup" aria-labelledby="l-theme"></div>
+      </div>
+
+      <div class="field">
+        <span class="label" id="l-bg" data-hi="बैकग्राउंड">Background</span>
+        <div class="chips" id="bgs" role="radiogroup" aria-labelledby="l-bg"></div>
+        <div class="photo-row" id="photoRow" hidden>
+          <button class="btn btn-soft" id="btnPhoto" type="button"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><span id="btnPhotoLabel">Choose photo</span></button>
+          <button class="btn btn-ghost" id="btnPhotoClear" type="button" data-hi="हटाएँ">Remove</button>
+          <span class="hint" id="photoHint"></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label" id="l-layout" data-hi="काउंटडाउन लेआउट">Countdown layout</span>
+        <div class="layouts" id="layouts" role="radiogroup" aria-labelledby="l-layout"></div>
+      </div>
+
+      <div class="field">
+        <span class="label" id="l-font" data-hi="फ़ॉन्ट">Typeface</span>
+        <div class="chips" id="fonts" role="radiogroup" aria-labelledby="l-font"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label class="label" for="inPrec" data-hi="दिखाएँ">Show</label>
+          <select id="inPrec">
+            <option value="days" data-hi="सिर्फ़ दिन (वॉलपेपर के लिए सबसे अच्छा)">Days only (best for wallpapers)</option>
+            <option value="hours" data-hi="दिन + घंटे">Days + hours</option>
+            <option value="minutes" data-hi="दिन + घंटे + मिनट">Days + hours + minutes</option>
+            <option value="full" data-hi="सब कुछ (लाइव सेकंड)">Everything (live seconds)</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="label" id="l-pos" data-hi="स्थिति">Position</span>
+          <div class="seg" id="poss" role="radiogroup" aria-labelledby="l-pos"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="inSize"><span data-hi="कंटेंट का साइज़">Content size</span> <output id="sizeVal" for="inSize">100%</output></label>
+        <input id="inSize" type="range" min="70" max="125" step="1" value="100">
+      </div>
+
+      <div class="field">
+        <span class="label" id="l-accent" data-hi="ख़ास रंग">Accent colour</span>
+        <div class="accent-row">
+          <input id="inAccent" type="color" value="#8be9fd" aria-labelledby="l-accent">
+          <button class="btn btn-ghost" id="btnAccentReset" type="button" data-hi="थीम का रंग लें">Use theme colour</button>
+        </div>
+      </div>
+
+      <div class="switches">
+        <label class="switch"><input type="checkbox" id="swBar"><span class="track" aria-hidden="true"></span><span class="lbl" data-hi="प्रगति बार">Progress bar</span></label>
+        <label class="switch"><input type="checkbox" id="swDate"><span class="track" aria-hidden="true"></span><span class="lbl" data-hi="तारीख़ दिखाएँ">Show the date</span></label>
+        <label class="switch"><input type="checkbox" id="swGrain"><span class="track" aria-hidden="true"></span><span class="lbl" data-hi="फ़िल्म ग्रेन">Film grain</span></label>
+      </div>
+    </div>
+
+    <!-- ---- Export ---- -->
+    <div class="pane" id="pane-export" role="tabpanel" aria-labelledby="tab-export" hidden>
+      <div class="field">
+        <label class="label" for="inDevice" data-hi="स्क्रीन साइज़">Screen size</label>
+        <select id="inDevice"></select>
+        <div class="custom-size" id="customSize" hidden>
+          <label><span data-hi="चौड़ाई">Width</span> <input id="inCW" type="number" inputmode="numeric" min="240" max="16384" step="1"></label>
+          <span aria-hidden="true">×</span>
+          <label><span data-hi="ऊँचाई">Height</span> <input id="inCH" type="number" inputmode="numeric" min="240" max="16384" step="1"></label>
+        </div>
+        <p class="hint" id="sizeInfo"></p>
+      </div>
+
+      <div class="field">
+        <span class="label" id="l-fmt" data-hi="फ़ॉर्मैट">Format</span>
+        <div class="seg" id="fmts" role="radiogroup" aria-labelledby="l-fmt"></div>
+        <div class="quality" id="qualityRow" hidden>
+          <label class="label" for="inQ"><span data-hi="JPG क्वालिटी">JPG quality</span> <output id="qVal" for="inQ">92</output></label>
+          <input id="inQ" type="range" min="60" max="100" step="1" value="92">
+        </div>
+      </div>
+
+      <div class="export-actions">
+        <button class="btn btn-primary btn-lg" id="btnDownload" type="button"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span data-hi="वॉलपेपर डाउनलोड करें">Download wallpaper</span></button>
+        <button class="btn btn-soft btn-lg" id="btnShare" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg><span data-hi="शेयर करें…">Share…</span></button>
+      </div>
+      <p class="note" id="snapNote"></p>
+
+      <div class="block pack">
+        <div class="block-head">
+          <svg class="ic" aria-hidden="true"><use href="#i-zip"/></svg>
+          <div><h3 data-hi="डेली पैक">Daily pack</h3><p data-hi="डेडलाइन तक हर दिन का एक वॉलपेपर, ज़िप में। इसे वॉलपेपर बदलने वाले ऐप या ऑटोमेशन के साथ इस्तेमाल करें ताकि लॉक स्क्रीन ख़ुद अपडेट होती रहे।">One wallpaper per day until the deadline, zipped. Use it with a wallpaper-rotation app or an automation so your lock screen updates itself.</p></div>
+        </div>
+        <div class="pack-row">
+          <label class="label" for="inPack" data-hi="कितने दिन शामिल करें">Days to include</label>
+          <select id="inPack">
+            <option value="7" data-hi="अगले 7 दिन">Next 7 days</option>
+            <option value="14" data-hi="अगले 14 दिन">Next 14 days</option>
+            <option value="30" data-hi="अगले 30 दिन">Next 30 days</option>
+            <option value="60" data-hi="अगले 60 दिन">Next 60 days</option>
+            <option value="100" data-hi="अगले 100 दिन">Next 100 days</option>
+          </select>
+        </div>
+        <p class="hint" id="packInfo"></p>
+        <div class="progress" id="packProg" hidden><i id="packBar"></i><span id="packText"></span></div>
+        <button class="btn btn-soft btn-lg" id="btnPack" type="button"><svg class="ic" aria-hidden="true"><use href="#i-zip"/></svg><span id="btnPackLabel">Build daily pack (.zip)</span></button>
+      </div>
+
+      <details class="howto">
+        <summary data-hi="इसे लॉक स्क्रीन कैसे बनाएँ">How to set it as your lock screen</summary>
+        <ul>
+          <li data-hi-html="<strong>iPhone / iPad:</strong> फ़ोटोज़ में सेव करें → इमेज खोलें → शेयर → <em>Use as Wallpaper</em> → लॉक स्क्रीन।"><strong>iPhone / iPad:</strong> save to Photos → open the image → Share → <em>Use as Wallpaper</em> → Lock Screen.</li>
+          <li data-hi-html="<strong>Android:</strong> गैलरी में इमेज खोलें → ⋮ → <em>वॉलपेपर के रूप में सेट करें</em> → लॉक स्क्रीन।"><strong>Android:</strong> open the image in Gallery → ⋮ → <em>Set as wallpaper</em> → Lock screen.</li>
+          <li data-hi-html="<strong>Windows:</strong> सेटिंग्स → वैयक्तिकरण → लॉक स्क्रीन → चित्र → ब्राउज़।"><strong>Windows:</strong> Settings → Personalisation → Lock screen → Picture → Browse.</li>
+          <li data-hi-html="<strong>Mac:</strong> सिस्टम सेटिंग्स → वॉलपेपर → फ़ोटो जोड़ें।"><strong>Mac:</strong> System Settings → Wallpaper → Add Photo.</li>
+          <li data-hi-html="<strong>हमेशा लाइव:</strong> ऊपर <em>लाइव लॉक स्क्रीन</em> दबाएँ — किसी भी डिवाइस पर फ़ुल-स्क्रीन, हर सेकंड चलता काउंटडाउन।"><strong>Always live:</strong> tap <em>Live lock screen</em> at the top for a full-screen, second-by-second countdown on any device.</li>
+        </ul>
+      </details>
+    </div>
+
+    <!-- ---- Confirm bar: Create (new event) / Done (existing) ---- -->
+    <div class="confirm-bar" id="confirmBar">
+      <button class="btn btn-ghost btn-lg" id="btnCancel" type="button" hidden data-hi="रद्द करें">Cancel</button>
+      <button class="btn btn-primary btn-lg" id="btnConfirm" type="button"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span id="confirmLabel">Done</span></button>
+    </div>
+  </section>
+
+  <!-- ============ PREVIEW ============ -->
+  <section class="panel" id="panel-preview" aria-labelledby="h-prev">
+    <div class="panel-head">
+      <div><h2 id="h-prev" data-hi="लाइव प्रीव्यू">Live preview</h2><p class="sub" id="devLabel">&nbsp;</p></div>
+      <label class="switch compact" title="Show a mock-up of the lock-screen clock and buttons (not included in the download)" data-hi-title="लॉक स्क्रीन की घड़ी और बटन का मॉक-अप दिखाएँ (डाउनलोड में शामिल नहीं)"><input type="checkbox" id="swMock" aria-label="Show lock-screen mock-up" data-hi-aria-label="लॉक स्क्रीन मॉक-अप दिखाएँ"><span class="track" aria-hidden="true"></span><span class="lbl" data-hi="मॉक-अप">Mock-up</span></label>
+    </div>
+    <div class="stage" id="stage">
+      <div class="device" id="device" data-kind="phone">
+        <canvas id="preview" role="img" aria-label="Wallpaper preview"></canvas>
+        <span class="island" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="preview-actions">
+      <button class="btn btn-soft only-mobile" id="btnEdit" type="button"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg><span data-hi="कस्टमाइज़ करें">Customise</span></button>
+      <button class="btn btn-primary" id="btnDownload2" type="button"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span data-hi="डाउनलोड">Download</span></button>
+      <button class="btn btn-soft" id="btnShare2" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg><span data-hi="शेयर">Share</span></button>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Sections" data-hi-aria-label="सेक्शन">
+  <button type="button" data-view="list"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><span data-hi="डेडलाइन">Deadlines</span></button>
+  <button type="button" data-view="studio"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg><span data-hi="स्टूडियो">Studio</span></button>
+  <button type="button" data-view="preview"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span data-hi="प्रीव्यू">Preview</span></button>
+</nav>
+
+<!-- Full-screen live lock screen -->
+<div class="lock" id="lock" hidden role="dialog" aria-modal="true" aria-label="Live lock screen" data-hi-aria-label="लाइव लॉक स्क्रीन">
+  <canvas id="lockCanvas"></canvas>
+  <div class="lock-ui" id="lockUi">
+    <button class="lock-btn lock-exit" id="lockExit" type="button" aria-label="Exit lock screen" data-hi-aria-label="लॉक स्क्रीन बंद करें"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    <button class="lock-btn lock-prev" id="lockPrev" type="button" aria-label="Previous deadline" data-hi-aria-label="पिछली डेडलाइन"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg></button>
+    <button class="lock-btn lock-next" id="lockNext" type="button" aria-label="Next deadline" data-hi-aria-label="अगली डेडलाइन"><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
+    <p class="lock-hint" data-hi="बटन दिखाने/छिपाने के लिए टैप करें · बाहर निकलने के लिए Esc">Tap to show or hide controls · Esc to exit</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<input type="file" id="inPhoto" accept="image/*" hidden>
+
+<noscript><p class="noscript">Deadline OS needs JavaScript to draw your countdown. Please enable it and reload. · डेडलाइन OS को चलाने के लिए JavaScript चालू करें।</p></noscript>
+
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 18h.01"/></symbol>
+    <symbol id="i-zip" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+  </defs>
+</svg>
+
+<script src="app.js" defer></script>
+</body>
+</html>
